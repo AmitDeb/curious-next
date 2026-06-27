@@ -30,7 +30,7 @@ This document defines the target architecture for a production deployment, not t
 | Device | Device registry (CRUD), Device Status Report history per device |
 | Messenger | 1:1 & group conversations, text messages, file attachments (image/video/document), delivery/read status |
 | Calling | WebRTC 1:1 audio/video calls, initiated from a conversation |
-| User | User CRUD, authentication, role-based access (end user / support agent / admin) |
+| User | User CRUD, authentication, role-based access (field technician / support agent / admin) |
 | Notifications | Push notification on new message, call, and status-report result |
 
 ---
@@ -174,7 +174,7 @@ Detailed schema (columns, types, indexes) is in the LLD.
 ## 7. Security Architecture
 
 - **AuthN:** OIDC via Identity Platform; short-lived access JWTs + refresh tokens; MFA available for agent/admin roles.
-- **AuthZ:** RBAC (`END_USER`, `SUPPORT_AGENT`, `ADMIN`) plus resource-ownership checks at the service layer (a user can only see their own devices/reports/conversations unless elevated role).
+- **AuthZ:** RBAC (`FIELD_TECHNICIAN`, `SUPPORT_AGENT`, `ADMIN`) plus resource-ownership checks at the service layer (a user can only see their own devices/reports/conversations unless elevated role).
 - **Transport:** TLS 1.2+ everywhere via Google-managed certificates on the load balancer; mTLS between internal services if/when split out of the monolith.
 - **Encryption at rest:** Cloud SQL default encryption; Cloud KMS customer-managed keys (CMEK) available for sensitive fields if compliance requires.
 - **Secrets:** Secret Manager only — never in code, env files, or git (the repo's `.gitignore` already excludes `.env*`).

@@ -34,7 +34,7 @@ CREATE TABLE users (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email           VARCHAR(255) NOT NULL UNIQUE,
     display_name    VARCHAR(120) NOT NULL,
-    role            VARCHAR(20)  NOT NULL CHECK (role IN ('END_USER','SUPPORT_AGENT','ADMIN')),
+    role            VARCHAR(20)  NOT NULL CHECK (role IN ('FIELD_TECHNICIAN','SUPPORT_AGENT','ADMIN')),
     status          VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE','SUSPENDED','DELETED')),
     identity_provider_sub VARCHAR(255) NOT NULL UNIQUE,  -- Identity Platform subject
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -247,7 +247,7 @@ Access token TTL: 15 minutes. Refresh token TTL: 14 days, rotated on use, revoca
 
 **RBAC matrix (representative):**
 
-| Action | END_USER | SUPPORT_AGENT | ADMIN |
+| Action | FIELD_TECHNICIAN | SUPPORT_AGENT | ADMIN |
 |---|---|---|---|
 | View own devices/reports | ✅ | ✅ | ✅ |
 | View any user's devices/reports | ❌ | ✅ | ✅ |
