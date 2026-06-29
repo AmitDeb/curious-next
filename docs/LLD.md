@@ -245,7 +245,7 @@ sequenceDiagram
     participant Recipient as App (Recipient)
 
     Sender->>API: POST /conversations/{id}/messages {body, attachmentRefs}
-    API->>DB: check membership; insert message
+    API->>DB: check membership, insert message
     API->>PS: publish "message.sent"
     API-->>Sender: 201 Created {messageId, sentAt}
     PS->>RTG: deliver event
