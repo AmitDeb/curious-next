@@ -159,6 +159,7 @@ Migrations are managed via **Flyway**, one versioned file per change, no manual 
 | POST | `/v1/conversations` | Bearer | Create direct or group conversation |
 | POST | `/v1/conversations/{id}/messages` | Bearer | Send message (text + optional attachment refs) |
 | GET | `/v1/conversations/{id}/messages` | Bearer | Paginated message history (cursor-based) |
+| PUT | `/v1/conversations/{id}/read` | Bearer | Mark conversation read up to a timestamp/message (updates `conversation_members.last_read_at`) |
 | POST | `/v1/media/upload-url` | Bearer | Request a signed upload slot (GCS) before attaching media |
 | POST | `/v1/conversations/{id}/calls` | Bearer | Initiate a call session, returns signaling endpoint + TURN credentials |
 | WS | `/v1/signaling` | Bearer (token in handshake) | WebSocket for SDP offer/answer + ICE candidate exchange |
@@ -228,6 +229,42 @@ sequenceDiagram
     SIG->>Callee: relay candidates
     Caller-->Callee: media (P2P, or via TURN if direct path fails)
 ```
+
+### 4.3 Messenger — message send, real-time delivery & read receipt
+
+> The `Realtime Gateway` below is the existing Signaling Service (§3.3 of HLD) generalized to also carry message events over the same per-device WebSocket, instead of running a second stateful connection service. This is a **recommendation pending confirmation** (tracked in §10) — not yet implemented.
+
+```mermaid
+sequenceDiagram
+    participant Sender as App (Sender)
+    participant API as Core API
+    participant DB as Cloud SQL
+    participant PS as Pub/Sub
+    participant RTG as Realtime Gateway (WS)
+    participant NW as Notification Worker
+    participant Recipient as App (Recipient)
+
+    Sender->>API: POST /conversations/{id}/messages {body, attachmentRefs}
+    API->>DB: check membership; insert message
+    API->>PS: publish "message.sent"
+    API-->>Sender: 201 Created {messageId, sentAt}
+    PS->>RTG: deliver event
+    alt Recipient has an active WS session
+        RTG->>Recipient: push message event over WS
+    else Recipient offline / app backgrounded
+        PS->>NW: deliver event
+        NW->>Recipient: push notification (FCM)
+    end
+    Recipient->>API: GET /conversations/{id}/messages (on open / reconnect)
+    API-->>Recipient: 200 {messages[]}
+    Recipient->>API: PUT /conversations/{id}/read {lastReadAt}
+    API->>DB: update conversation_members.last_read_at
+    API->>PS: publish "message.read"
+    PS->>RTG: deliver event
+    RTG->>Sender: push read-receipt event over WS
+```
+
+Key points to call out: the write path (`POST /messages`) never blocks on delivery — it returns as soon as the row is committed and the event is published, so a slow/disconnected recipient can't slow down the sender. Delivery fans out two ways from the same event (WS for online recipients, FCM for offline/backgrounded ones), which is why `message.sent` is published once and consumed by two independent subscribers rather than the API branching on presence itself. Read receipts reuse the identical event→fan-out path, just with a different event type and a one-row update (`last_read_at`) instead of an insert.
 
 ---
 
@@ -325,6 +362,7 @@ Dead-letter topics configured on all Pub/Sub subscriptions (max 5 delivery attem
 
 ## 10. Open Items (carried from HLD §10)
 
+- Confirm the Messenger real-time delivery design (§4.3): generalizing the Signaling Service into a shared Realtime Gateway for both call signaling and message/read-receipt events, vs. keeping them as separate channels.
 - Confirm Drive-only vs. GCS-primary/Drive-mirror media strategy.
 - Vision/OCR prototyping spike needed before locking the model choice and confidence thresholds.
 - Pending design principles doc — may change module structure, naming, or tooling choices above.
