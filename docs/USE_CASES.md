@@ -33,8 +33,6 @@ flowchart LR
         UC5(["Share File Attachment"])
         UC6(["Audio / Video Call"])
         UC7(["Manage Users"])
-        UC8(["Audit Devices / Reports Fleet-wide"])
-        UC9(["View Audit Log & Dashboards"])
     end
 
     FT --> UC1
@@ -52,8 +50,6 @@ flowchart LR
 
     AD --> UC1
     AD --> UC7
-    AD --> UC8
-    AD --> UC9
 ```
 
 ---
@@ -216,3 +212,4 @@ flowchart TD
 
 - Confirm whether "Issue found?" triage (UC flow §4) is a manual technician judgment call (as modeled) or should be partly automated (e.g. system auto-flags out-of-range readings and suggests escalation).
 - Confirm Admin-facing use cases (UC-AD-01/02) — do agents also need read access to dashboards, or is that Admin-only as modeled?
+                                                                                                                               
