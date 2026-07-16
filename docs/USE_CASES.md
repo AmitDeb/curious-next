@@ -212,4 +212,3 @@ flowchart TD
 
 - Confirm whether "Issue found?" triage (UC flow §4) is a manual technician judgment call (as modeled) or should be partly automated (e.g. system auto-flags out-of-range readings and suggests escalation).
 - Confirm Admin-facing use cases (UC-AD-01/02) — do agents also need read access to dashboards, or is that Admin-only as modeled?
-                                                                                                                               
